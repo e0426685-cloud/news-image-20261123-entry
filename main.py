@@ -26,6 +26,8 @@ def validate_png(path):
     if len(data) < 33 or data[12:16] != b"IHDR":
         raise SystemExit("entry.png has no IHDR chunk")
     width, height = struct.unpack(">II", data[16:24])
+    if width == 0 or height == 0:
+        raise SystemExit("entry.png has a zero dimension and is not a real image")
     if width > MAX_DIM or height > MAX_DIM:
         raise SystemExit("entry.png exceeds 1024x1024")
     if not data.endswith(b"\xaeB`\x82"):
@@ -42,10 +44,12 @@ def main():
     os.makedirs(out_dir, exist_ok=True)
     data = validate_png(src)
     dst = os.path.join(out_dir, "entry.png")
-    with open(dst, "wb") as fh:
+    tmp = dst + ".tmp"
+    with open(tmp, "wb") as fh:
         fh.write(data)
         fh.flush()
         os.fsync(fh.fileno())
+    os.replace(tmp, dst)
     digest = hashlib.sha256(data).hexdigest()
     with open(dst, "rb") as fh:
         written = hashlib.sha256(fh.read()).hexdigest()
