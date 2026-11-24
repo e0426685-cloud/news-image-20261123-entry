@@ -43,7 +43,11 @@ def main():
     with open(dst, "wb") as fh:
         fh.write(data)
     digest = hashlib.sha256(data).hexdigest()
-    print("wrote %s (%d bytes, sha256 %s)" % (dst, len(data), digest))
+    with open(dst, "rb") as fh:
+        written = hashlib.sha256(fh.read()).hexdigest()
+    if written != digest:
+        raise SystemExit("output verification failed: sha256 mismatch after write")
+    print("wrote %s (%d bytes, sha256 %s, verified)" % (dst, len(data), digest))
 
 
 if __name__ == "__main__":
