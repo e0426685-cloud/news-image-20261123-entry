@@ -30,6 +30,8 @@ def validate_png(path):
         raise SystemExit("entry.png exceeds 1024x1024")
     if not data.endswith(b"\xaeB`\x82"):
         raise SystemExit("entry.png is truncated (no IEND)")
+    if b"IDAT" not in data:
+        raise SystemExit("entry.png has no IDAT chunk (no image data)")
     return data
 
 
@@ -42,6 +44,8 @@ def main():
     dst = os.path.join(out_dir, "entry.png")
     with open(dst, "wb") as fh:
         fh.write(data)
+        fh.flush()
+        os.fsync(fh.fileno())
     digest = hashlib.sha256(data).hexdigest()
     with open(dst, "rb") as fh:
         written = hashlib.sha256(fh.read()).hexdigest()
